@@ -1,0 +1,26 @@
+<VirtualHost *:80>
+    ServerName <fqdn>
+    Redirect permanent / https://<fqdn>/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerAdmin admin@<fqdn>
+    ServerName <fqdn>
+
+    DocumentRoot /var/www/<fqdn>/
+    <Directory /var/www/<fqdn>/>
+        Options ExecCGI
+        AddHandler cgi-script .cgi .py
+    </Directory>
+
+
+    ErrorLog /var/log/apache2/<fqdn>-error.log
+    LogLevel warn
+
+    CustomLog /var/log/apache2/<fqdn>-access.log combined
+    ServerSignature On
+
+    SSLEngine on
+    SSLCertificateFile /etc/apache2/ssl/<fqdn>.crt
+    SSLCertificateKeyFile /etc/apache2/ssl/<fqdn>.key
+</VirtualHost>

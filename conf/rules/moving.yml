@@ -1,0 +1,12 @@
+name: moving
+enabled: True
+trigger:
+    -
+        type: speed
+        min: 10
+        clear_timeout : 6000
+notification:
+    -
+        type: email
+        recipients:
+            - magahet@gmail.com
