@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+'''Runner for locator app'''
+
+import locator
+
+
+if __name__ == '__main__':
+    locator_service = locator.Service()
+    try:
+        locator_service.run()
+    except KeyboardInterrupt:
+        pass

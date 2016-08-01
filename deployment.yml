@@ -1,0 +1,17 @@
+---
+- hosts: all
+  sudo: yes
+  tasks:
+    - name: copy webapp
+      copy: src=webapp/ dest=/var/www/{{fqdn}} owner=www-data group=www-data
+    - name: copy python code
+      copy: src=locator dest=/usr/local/lib/python2.7/dist-packages owner=root group=root
+    - name: copy runners
+      copy: src=bin/ dest=/usr/local/bin owner=root group=root
+    - name: copy service definition
+      copy: src=conf/locator.conf dest=/etc/init owner=root group=root
+    - name: start locator service
+      service: name=locator state=started
+
+
+# vim:ft=ansible:
