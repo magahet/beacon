@@ -1,2 +1,2 @@
 all:
-	ansible-playbook -i env.yml deployment.yml
+	ansible-playbook -K -i env.yml deployment.yml

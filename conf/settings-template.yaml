@@ -1,0 +1,6 @@
+locations_path: <file specifying locations>
+gps_dir: <dir to store position json files>
+email_settings:
+    from: <from address>
+    api_key: <mailgun api key>
+interval: <polling interval>

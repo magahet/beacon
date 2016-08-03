@@ -16,7 +16,7 @@ def parse_float(string_):
         return None
 
 
-def save_data(data, data_dir='/var/gps.gmendiola.com/'):
+def save_data(data, data_dir='/var/locator'):
     path = os.path.join(data_dir, '{}.json'.format(data.get('id')))
     with open(path, 'w') as file_:
         json.dump(data, file_)
