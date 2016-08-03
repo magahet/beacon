@@ -39,8 +39,7 @@ def get_setting(key, path='/etc/beacon/settings.yaml'):
 def main():
     '''Log gps data.'''
     tz_offset = -8
-    valid_ids = ('gar', 'jj', 'test', 'ysu')
-
+    valid_ids = get_setting('valid_ids')
     args = cgi.FieldStorage()
     lat = parse_float(args.getfirst('lat'))
     lon = parse_float(args.getfirst('lon'))
