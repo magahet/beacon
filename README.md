@@ -37,5 +37,3 @@ Ansible requires a env.yml file with the following:
 
     [ec2:vars]
     fqdn=<fqdn for server>
-    gps_key=<secret key for webapp>
-    mail_key=<mailgun api key>

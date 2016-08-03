@@ -1,9 +1,20 @@
 ---
 - hosts: all
   sudo: yes
+  handlers:
+    - name: restart apache2
+      service: name=apache2 state=restarted
   tasks:
     - name: copy webapp
       copy: src=webapp/ dest=/var/www/{{fqdn}} owner=www-data group=www-data
+    - name: copy webapp vhost conf
+      template: src=conf/apache.conf dest=/etc/apache2/sites-available/{{fqdn}}.conf
+    - name: enable site
+      command: a2ensite {{fqdn}}
+      args:
+        creates: /etc/apache2/sites-enabled/{{fqdn}}.conf
+      notify:
+        - restart apache2
     - name: copy python code
       copy: src=lib/beacon dest=/usr/local/lib/python2.7/dist-packages owner=root group=root
     - name: setup settings dir
@@ -16,5 +27,6 @@
       copy: src=bin/beacon-runner.py dest=/usr/local/bin/beacon owner=root group=root
     - name: copy upstart service definition
       copy: src=conf/upstart.conf dest=/etc/init/beacon.conf owner=root group=root
+
 
 # vim:ft=ansible:
