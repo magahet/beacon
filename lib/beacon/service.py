@@ -10,10 +10,10 @@ import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
-class LocationService(object):
-    '''Locator service for alerting based on location rules.'''
+class BeaconService(object):
+    '''Beacon service for alerting based on location rules.'''
 
-    def __init__(self, conf_path='/etc/locator/settings.yaml'):
+    def __init__(self, conf_path='/etc/beacon/settings.yaml'):
         with open(conf_path, 'r') as file_:
             settings = yaml.load(file_)
         self.locations_path = settings.get('locations_path', '')

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-'''Runner for locator app'''
+'''Runner for beacon app'''
 
-import locator
+import beacon
 import logging
 
 
@@ -15,9 +15,9 @@ def main():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
-    locator_service = locator.LocationService()
+    beacon_service = beacon.BeaconService()
     try:
-        locator_service.run()
+        beacon_service.run()
     except KeyboardInterrupt:
         pass
 
