@@ -132,7 +132,7 @@ class BeaconService(object):
         to_ = location.get('email', '')
         from_ = self.email_settings.get('from', '')
         api_key = self.email_settings.get('api_key', '')
-        _, _, domain = from_.partition('@')
+        domain = self.email_settings.get('domain', '')
         emailer = email.Emailer(domain, api_key)
         status = emailer.send(from_, to_, subject, html=message)
         return status.ok
