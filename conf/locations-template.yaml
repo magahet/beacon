@@ -1,0 +1,12 @@
+-
+    name: location1
+    lat: 34.23423
+    lon: -118.39433
+    radius: 10 # in meters
+    email: user@domain.com
+-
+    name: location2
+    lat: 34.23423
+    lon: -118.39433
+    radius: 20
+    email: user@domain.com, user2@domain.com

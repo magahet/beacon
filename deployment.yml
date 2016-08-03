@@ -21,9 +21,11 @@
       file: path=/etc/beacon state=directory mode=0755 owner=root group=root
     - name: setup positions dir
       file: path=/var/beacon state=directory mode=0755 owner=www-data group=www-data
-    - name: copy settings
+    - name: copy settings template
       copy: src=conf/settings-template.yaml dest=/etc/beacon/settings-template.yaml owner=root group=root
-    - name: copy runners
+    - name: copy locations template
+      copy: src=conf/locations-template.yaml dest=/etc/beacon/locations-template.yaml owner=root group=root
+    - name: copy runner
       copy: src=bin/beacon-runner.py dest=/usr/local/bin/beacon owner=root group=root
     - name: copy upstart service definition
       copy: src=conf/upstart.conf dest=/etc/init/beacon.conf owner=root group=root
