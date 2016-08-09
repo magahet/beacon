@@ -17,15 +17,18 @@ class BeaconService(object):
         with open(conf_path, 'r') as file_:
             settings = yaml.load(file_)
         self.locations_path = settings.get('locations_path', '')
+        self.nearby_path = settings.get('nearby_path', '')
         self.gps_dir = settings.get('gps_dir', '')
         self.email_settings = settings.get('email_settings', {})
         self.interval = settings.get('interval', 60)
+        self.interval = settings.get('nearby_radius', 100)
         self.last_positions = {}
         self.positions = {}
         self.locations = []
 
     def run(self):
         self.update_locations()
+        self.update_nearby()
         while True:
             self.update_positions()
             self.check_rules()
@@ -36,9 +39,17 @@ class BeaconService(object):
         if not self.last_positions:
             logging.debug('No previous positions')
             return None
+        # Location alerts
         for location in self.locations:
             logging.debug('Checking location: %s', str(location))
             self.check_positions(location)
+        # Nearby alerts
+        for name in self.nearby:
+            position = self.positions.get(name)
+            if not position:
+                continue
+            logging.debug('Checking for people nearby: %s', str(position))
+            self.check_nearby(position)
 
     def in_location(self, position, location):
         point1 = (position.get('lat'), position.get('lon'))
@@ -84,6 +95,21 @@ class BeaconService(object):
                 self.notify(name, position, location, 'entered')
             elif was_in and not is_in:
                 self.notify(name, position, location, 'left')
+
+    def check_nearby(self, position1):
+        for name, position2 in self.positions.iteritems():
+            last_position2 = self.last_positions.get(name)
+            logging.debug('Checking nearby for: %s Comparing: '
+                          '%s, %s, %s', position1.get('name'),
+                          name, position2, last_position2)
+            if not last_position2:
+                continue
+            was_in = self.in_location(last_position2, position1)
+            is_in = self.in_location(position1, position2)
+            if not was_in and is_in:
+                self.notify(name, position2, position1, 'is near')
+            #elif was_in and not is_in:
+                #self.notify(name, position, position, 'left')
 
     def update_positions(self):
         self.last_positions = self.positions.copy()
@@ -150,3 +176,10 @@ class BeaconService(object):
         with open(self.locations_path, 'r') as file_:
             self.locations = yaml.load(file_)
         logging.info('Imported locations: %s', str(self.locations))
+
+    def update_nearby(self):
+        if not os.path.isfile(self.nearby_path):
+            return []
+        with open(self.nearby_path, 'r') as file_:
+            self.nearby = yaml.load(file_)
+        logging.info('Imported nearby list: %s', str(self.nearby))

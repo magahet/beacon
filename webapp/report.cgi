@@ -17,9 +17,10 @@ def load_data(data_dir):
     return data
 
 
-def get_report(key, data_dir='/var/gps.gmendiola.com'):
+def get_report(key):
     '''Get position report.'''
     gps_key = get_setting('gps_key')
+    data_dir = get_setting('gps_dir')
     if key == gps_key:
         return {
             'status': 'ok',

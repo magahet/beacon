@@ -7,6 +7,7 @@ import datetime as dt
 import json
 import yaml
 import os
+import logging
 
 
 def parse_float(string_):
@@ -17,11 +18,12 @@ def parse_float(string_):
         return None
 
 
-def save_data(data):
+def save_data(data, logger):
     '''Save data to beacon working dir.'''
     data_dir = get_setting('gps_dir')
-    path = os.path.join(data_dir, '{}.json'.format(data.get('id')))
-    if os.path.isfile(path):
+    if os.path.isdir(data_dir):
+        path = os.path.join(data_dir, '{}.json'.format(data.get('id')))
+        logger.info('Writing data to: %s data: %s', path, str(data))
         with open(path, 'w') as file_:
             json.dump(data, file_)
 
@@ -38,6 +40,14 @@ def get_setting(key, path='/etc/beacon/settings.yaml'):
 
 def main():
     '''Log gps data.'''
+    logger = logging.getLogger()
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s %(message)s',
+        '%Y-%m-%d %H:%M:%S')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
     tz_offset = -8
     valid_ids = get_setting('valid_ids')
     args = cgi.FieldStorage()
@@ -59,9 +69,10 @@ def main():
         'speed': speed,
     }
     if None not in (lat, lon, time, speed, id_) and id_ in valid_ids:
-        save_data(data)
+        save_data(data, logger)
         print json.dumps({'status': 'ok'})
     else:
+        logger.info('Error saving data: %s', str(data))
         print json.dumps({'status': 'error', 'data': data})
 
 
