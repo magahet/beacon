@@ -1,10 +1,10 @@
 import yaml
 import json
 import os
-import math
 import time
-import email
 import logging
+import checks
+import email
 
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -14,21 +14,36 @@ class BeaconService(object):
     '''Beacon service for alerting based on location rules.'''
 
     def __init__(self, conf_path='/etc/beacon/settings.yaml'):
+        '''Import settings and checks.'''
         with open(conf_path, 'r') as file_:
             settings = yaml.load(file_)
-        self.locations_path = settings.get('locations_path', '')
-        self.nearby_path = settings.get('nearby_path', '')
+
         self.gps_dir = settings.get('gps_dir', '')
         self.email_settings = settings.get('email_settings', {})
         self.interval = settings.get('interval', 60)
-        self.interval = settings.get('nearby_radius', 100)
+
         self.last_positions = {}
         self.positions = {}
-        self.locations = []
+
+        check_classes = {
+            'location': checks.LocationCheck,
+            'nearby': checks.NearbyCheck,
+            'moved': checks.MovedCheck,
+        }
+        self.checks = []
+        checks_path = settings.get('checks_path', '')
+        for filename in os.path.lsdir(checks_path):
+            path = os.path.join(checks_path, filename)
+            if not os.path.isfile(path):
+                continue
+            with open(path, 'r') as file_:
+                config = yaml.load(file_)
+            type_ = config.get('type')
+            if type_ not in self.check_classes:
+                continue
+            self.checks.append(check_classes.get(type_)(config))
 
     def run(self):
-        self.update_locations()
-        self.update_nearby()
         while True:
             self.update_positions()
             self.check_rules()
@@ -39,79 +54,22 @@ class BeaconService(object):
         if not self.last_positions:
             logging.debug('No previous positions')
             return None
-        # Location alerts
-        for location in self.locations:
-            logging.debug('Checking location: %s', str(location))
-            self.check_positions(location)
-        # Nearby alerts
-        for name in self.nearby:
-            position = self.positions.get(name)
-            if not position:
-                continue
-            logging.debug('Checking for people nearby: %s', str(position))
-            self.check_nearby(position)
-
-    def in_location(self, position, location):
-        point1 = (position.get('lat'), position.get('lon'))
-        point2 = (location.get('lat'), location.get('lon'))
-        radius = location.get('radius')
-        distance = self.distance(point1, point2)
-        logging.debug('Distance between %s and %s is %d.', str(point1),
-                      str(point2), distance)
-        return distance < radius
-
-    @staticmethod
-    def distance(point1, point2):
-        """
-        Calculate the great circle distance between two points
-        on the earth (specified in decimal degrees)
-        Returns meters
-        """
-        # convert decimal degrees to radians
-        lat1, lon1 = point1
-        lat2, lon2 = point2
-        lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
-
-        # haversine formula
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = (math.sin(dlat / 2) ** 2 +
-             math.cos(lat1) *
-             math.cos(lat2) *
-             math.sin(dlon / 2) ** 2)
-        c = 2 * math.asin(math.sqrt(a))
-        r = 6371000  # Radius of earth in kilometers. Use 3956 for miles
-        return c * r
-
-    def check_positions(self, location):
-        for name, position in self.positions.iteritems():
-            last_position = self.last_positions.get(name)
-            logging.debug('Checking: %s, %s, %s', name, position, last_position)
-            if not last_position:
-                continue
-            was_in = self.in_location(last_position, location)
-            is_in = self.in_location(position, location)
-            if not was_in and is_in:
-                self.notify(name, position, location, 'entered')
-            elif was_in and not is_in:
-                self.notify(name, position, location, 'left')
-
-    def check_nearby(self, position1):
-        for name, position2 in self.positions.iteritems():
-            last_position2 = self.last_positions.get(name)
-            logging.debug('Checking nearby for: %s Comparing: '
-                          '%s, %s, %s', position1.get('name'),
-                          name, position2, last_position2)
-            if not last_position2:
-                continue
-            was_in = self.in_location(last_position2, position1)
-            is_in = self.in_location(position1, position2)
-            if not was_in and is_in:
-                self.notify(name, position2, position1, 'is near')
-            #elif was_in and not is_in:
-                #self.notify(name, position, position, 'left')
+        for check in self.checks:
+            check.run(self.last_positions, self.positions)
+            if check.is_triggered:
+                self.notify(check)
 
     def update_positions(self):
+        '''Update everyone's positions from json files.'''
+
+        def load_position(self, name):
+            '''Load a position given a name.'''
+            path = os.path.join(self.gps_dir, '{}.json'.format(name))
+            if not os.path.isfile(path):
+                return None
+            with open(path, 'r') as file_:
+                return json.load(file_)
+
         self.last_positions = self.positions.copy()
         logging.debug('Last positions: %s', str(self.last_positions))
         filenames = os.listdir(self.gps_dir)
@@ -127,59 +85,12 @@ class BeaconService(object):
                 self.positions[name] = position
         logging.debug('Positions updated: %s', str(self.positions))
 
-    def notify(self, name, position, location, action):
-        subject = '{name} {action} {location}'.format(
-            name=name,
-            action=action,
-            location=location.get('name', ''))
-        logging.info('Sending notification: %s', subject)
-        message = (
-            '<html>'
-            '{name} {action} {location} ({radius}m) at {time}.</br>'
-            'Position: {position}.</br>'
-            '<a href="{map_url}/?q={lat},{lon}">'
-            '<img ng-src="{map_url}/api/staticmap'
-            '?center={lat},{lon}'
-            '&size=400x400'
-            '&zoom=14'
-            '&markers={lat},{lon}">'
-            '</img></a>'
-        ).format(
-            name=name,
-            action=action,
-            location=location.get('name', ''),
-            radius=location.get('radius', ''),
-            position=str(position),
-            time=position.get('time', ''),
-            map_url='http://maps.googleapis.com/maps',
-            lat=position.get('lat', ''),
-            lon=position.get('lon', '')
-        )
-        to_ = location.get('email', '')
+    def notify(self, check):
+        logging.info('Sending notification: %s', check.status)
         from_ = self.email_settings.get('from', '')
         api_key = self.email_settings.get('api_key', '')
         domain = self.email_settings.get('domain', '')
         emailer = email.Emailer(domain, api_key)
-        status = emailer.send(from_, to_, subject, html=message)
+        status = emailer.send(from_, check.email_alert_list, check.status,
+                              html=check.render_message('html'))
         return status.ok
-
-    def load_position(self, name):
-        path = os.path.join(self.gps_dir, '{}.json'.format(name))
-        if not os.path.isfile(path):
-            return None
-        with open(path, 'r') as file_:
-            return json.load(file_)
-
-    def update_locations(self):
-        if not os.path.isfile(self.locations_path):
-            return []
-        with open(self.locations_path, 'r') as file_:
-            self.locations = yaml.load(file_)
-        logging.info('Imported locations: %s', str(self.locations))
-
-    def update_nearby(self):
-        if not os.path.isfile(self.nearby_path):
-            return []
-        with open(self.nearby_path, 'r') as file_:
-            self.nearby = yaml.load(file_)
-        logging.info('Imported nearby list: %s', str(self.nearby))
