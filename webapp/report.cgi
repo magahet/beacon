@@ -6,6 +6,7 @@ import cgi
 import json
 import os
 import yaml
+import hashlib
 
 
 def load_data(data_dir):
@@ -17,11 +18,15 @@ def load_data(data_dir):
     return data
 
 
+def hash(string):
+    return hashlib.sha256(string).hexdigest()
+
+
 def get_report(key):
     '''Get position report.'''
-    gps_key = get_setting('gps_key')
+    gps_hash = get_setting('gps_hash')
     data_dir = get_setting('gps_dir')
-    if key == gps_key:
+    if hash(key) == gps_hash:
         return {
             'status': 'ok',
             'data': load_data(data_dir),
