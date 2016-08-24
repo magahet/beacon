@@ -1,20 +1,62 @@
 ---
 - hosts: all
-  sudo: yes
+  become: yes
   handlers:
     - name: restart apache2
       service: name=apache2 state=restarted
   tasks:
-    - name: copy webapp
-      copy: src=webapp/ dest=/var/www/{{fqdn}} owner=www-data group=www-data
+    # Install apt dependencies
+    - name: install dependencies
+      apt: name={{ item }}
+      with_items:
+        - python
+        - apache2
+        - apache2-utils
+        - python-pip
+        - python-yaml
+      notify:
+        - restart apache2
+    - name: install python dependencies
+      pip: name={{ item }}
+      with_items:
+        - requests
+        - python-firebase
+
+    # Enable apache mods
+    - name: enable apache mods
+      apache2_module: state=present name={{ item }}
+      with_items:
+        - cgid
+        - ssl
+      notify:
+        - restart apache2
+
+    # Setup vhost
     - name: copy webapp vhost conf
       template: src=conf/apache.conf dest=/etc/apache2/sites-available/{{fqdn}}.conf
     - name: enable site
-      command: a2ensite {{fqdn}}
+      command: a2ensite {{fqdn}}.conf
       args:
         creates: /etc/apache2/sites-enabled/{{fqdn}}.conf
       notify:
         - restart apache2
+
+    # Copy SSL cert
+    - name: make ssl dir
+      file: path=/etc/apache2/ssl state=directory mode=755 owner=root group=root
+    - name: copy webapp ssl cert
+      copy: src=ssl/{{fqdn}}.crt dest=/etc/apache2/ssl/{{fqdn}}.crt owner=root group=root
+    - name: copy webapp ssl key
+      copy: src=ssl/{{fqdn}}.key dest=/etc/apache2/ssl/{{fqdn}}.key owner=root group=root
+
+    # Copy webapp
+    - name: copy webapp
+      copy: src=webapp/ dest=/var/www/{{fqdn}} owner=www-data group=www-data
+    - name: make cgi executable
+      file: path={{item}} mode="a+x"
+      with_items:
+        - /var/www/{{fqdn}}/log.cgi
+        - /var/www/{{fqdn}}/report.cgi
     - name: copy python code
       copy: src=lib/beacon dest=/usr/local/lib/python2.7/dist-packages owner=root group=root
     - name: setup settings dir

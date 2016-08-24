@@ -3,11 +3,11 @@
 '''Logs gps coordinates for beacon.'''
 
 import cgi
-import datetime as dt
 import json
 import yaml
 import os
 import logging
+from firebase import firebase
 
 
 def parse_float(string_):
@@ -18,7 +18,7 @@ def parse_float(string_):
         return None
 
 
-def save_data(data, logger):
+def save_data_local(data, logger):
     '''Save data to beacon working dir.'''
     data_dir = get_setting('gps_dir')
     if os.path.isdir(data_dir):
@@ -26,6 +26,17 @@ def save_data(data, logger):
         logger.info('Writing data to: %s data: %s', path, str(data))
         with open(path, 'w') as file_:
             json.dump(data, file_)
+
+
+def save_data_firebase(data, logger):
+    '''Save data to firebase.'''
+    firebase_settings = get_setting('firebase')
+    auth = firebase.Authentication(firebase_settings.get('secret', ''), '')
+    db = firebase.FirebaseApplication(
+        '{}.firebaseio.com'.format(firebase_settings.get('project')),
+        authentication=auth)
+    data['time'] = {'.sv': 'timestamp'}
+    db.put('/positions', data.get('id', ''), data)
 
 
 def get_setting(key, path='/etc/beacon/settings.yaml'):
@@ -48,15 +59,10 @@ def main():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
-    tz_offset = -8
     valid_ids = get_setting('valid_ids')
     args = cgi.FieldStorage()
     lat = parse_float(args.getfirst('lat'))
     lon = parse_float(args.getfirst('lon'))
-    time = (
-        dt.datetime.strptime(args.getfirst('time'), "%Y-%m-%dT%H:%M:%SZ") +
-        dt.timedelta(hours=tz_offset)
-    )
     speed = parse_float(args.getfirst('s'))
     id_ = args.getfirst('id')
 
@@ -65,11 +71,10 @@ def main():
         'id': id_,
         'lat': lat,
         'lon': lon,
-        'time': time.isoformat(),
         'speed': speed,
     }
-    if None not in (lat, lon, time, speed, id_) and id_ in valid_ids:
-        save_data(data, logger)
+    if None not in (lat, lon, speed, id_) and id_ in valid_ids:
+        save_data_firebase(data, logger)
         print json.dumps({'status': 'ok'})
     else:
         logger.info('Error saving data: %s', str(data))

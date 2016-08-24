@@ -2,4 +2,8 @@
 *.swp
 env.yml
 prod.yml
+dev.yml
 settings.yaml
+ssl/
+.vagrant/
+test/
