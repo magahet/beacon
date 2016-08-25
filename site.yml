@@ -1,0 +1,7 @@
+---
+- name: configure and deploy beacon server
+  hosts: all
+  become: yes
+
+  roles:
+      - beacon

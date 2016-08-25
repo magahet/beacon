@@ -31,9 +31,9 @@ def save_data_local(data, logger):
 def save_data_firebase(data, logger):
     '''Save data to firebase.'''
     firebase_settings = get_setting('firebase')
-    auth = firebase.Authentication(firebase_settings.get('secret', ''), '')
+    auth = firebase.FirebaseAuthentication(firebase_settings.get('secret', ''), '')
     db = firebase.FirebaseApplication(
-        '{}.firebaseio.com'.format(firebase_settings.get('project')),
+        'https://{}.firebaseio.com'.format(firebase_settings.get('project')),
         authentication=auth)
     data['time'] = {'.sv': 'timestamp'}
     db.put('/positions', data.get('id', ''), data)

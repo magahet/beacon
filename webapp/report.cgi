@@ -7,6 +7,7 @@ import json
 import os
 import yaml
 import hashlib
+import firebase
 
 
 def load_data(data_dir):
@@ -16,6 +17,17 @@ def load_data(data_dir):
         with open(os.path.join(data_dir, filename), 'r') as file_:
             data.append(json.load(file_))
     return data
+
+
+def load_data_firebase():
+    '''Save data to firebase.'''
+    firebase_settings = get_setting('firebase')
+    auth = firebase.FirebaseAuthentication(firebase_settings.get('secret', ''), '')
+    db = firebase.FirebaseApplication(
+        'https://{}.firebaseio.com'.format(firebase_settings.get('project')),
+        authentication=auth)
+    data = db.get('/positions', None)
+    return data.values()
 
 
 def hash(string):
@@ -29,7 +41,7 @@ def get_report(key):
     if hash(key) == gps_hash:
         return {
             'status': 'ok',
-            'data': load_data(data_dir),
+            'data': load_data_firebase(),
         }
     else:
         return {'status': 'unauthorized'}

@@ -1,0 +1,5 @@
+---
+- include: install_dependencies.yml
+- include: setup_apache.yml
+- include: deploy_webapp.yml
+- include: setup_service.yml

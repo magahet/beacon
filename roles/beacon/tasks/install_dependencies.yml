@@ -1,0 +1,17 @@
+---
+# Install apt dependencies
+- name: install dependencies
+  apt: name={{ item }}
+  with_items:
+    - python
+    - apache2
+    - apache2-utils
+    - python-pip
+    - python-yaml
+  notify:
+    - restart apache2
+- name: install python dependencies
+  pip: name={{ item }}
+  with_items:
+    - python-firebase
+
