@@ -1,0 +1,11 @@
+---
+- name: configure and deploy beacon server
+  hosts: all
+  become: yes
+  tasks:
+    - include: tasks/install_dependencies.yml
+    - include: tasks/setup_apache.yml
+    - include: tasks/deploy_webapp.yml
+    - include: tasks/setup_service.yml
+  handlers:
+    - include: handlers/main.yml

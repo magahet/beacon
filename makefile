@@ -1,4 +1,4 @@
 dev:
-	ansible-playbook -i dev.yml deployment.yml
+	ansible-playbook -e 'host_key_checking=False' -i deploy/env/dev deploy/main.yml
 prod:
-	ansible-playbook -i prod.yml deployment.yml
+	ansible-playbook -i deploy/env/prod deploy/main.yml

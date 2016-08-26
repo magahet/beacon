@@ -1,0 +1,5 @@
+[all]
+web02.gmendiola.com
+
+[all:vars]
+fqdn=gps.gmendiola.com

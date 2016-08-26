@@ -1,0 +1,8 @@
+[all]
+127.0.0.1
+
+[all:vars]
+fqdn=gps.gmendiola.com
+ansible_port=2222
+ansible_user=vagrant
+ansible_ssh_private_key_file=.vagrant/machines/default/virtualbox/private_key
