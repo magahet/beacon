@@ -1,5 +1,6 @@
 *.pyc
 *.swp
+*.retry
 settings.yaml
 .vagrant/
 test/

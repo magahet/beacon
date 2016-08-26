@@ -6,6 +6,10 @@
     - include: tasks/install_dependencies.yml
     - include: tasks/setup_apache.yml
     - include: tasks/deploy_webapp.yml
+      tags:
+          - webapp
     - include: tasks/setup_service.yml
+      tags:
+          - webapp
   handlers:
     - include: handlers/main.yml

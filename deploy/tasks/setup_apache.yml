@@ -10,7 +10,7 @@
 
 # Setup vhost
 - name: copy webapp vhost conf
-  template: src=conf/apache.conf dest=/etc/apache2/sites-available/{{fqdn}}.conf
+  template: src=../conf/apache.conf dest=/etc/apache2/sites-available/{{fqdn}}.conf
 - name: enable site
   command: a2ensite {{fqdn}}.conf
   args:
@@ -22,6 +22,6 @@
 - name: make ssl dir
   file: path=/etc/apache2/ssl state=directory mode=755 owner=root group=root
 - name: copy webapp ssl cert
-  copy: src=ssl/{{fqdn}}.crt dest=/etc/apache2/ssl/{{fqdn}}.crt owner=root group=root
+  copy: src=../ssl/{{fqdn}}.crt dest=/etc/apache2/ssl/{{fqdn}}.crt owner=root group=root
 - name: copy webapp ssl key
-  copy: src=ssl/{{fqdn}}.key dest=/etc/apache2/ssl/{{fqdn}}.key owner=root group=root
+  copy: src=../ssl/{{fqdn}}.key dest=/etc/apache2/ssl/{{fqdn}}.key owner=root group=root

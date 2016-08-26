@@ -1,5 +1,5 @@
 ---
 - name: copy runner
-  copy: src=bin/beacon-runner.py dest=/usr/local/bin/beacon owner=root group=root
+  copy: src=../bin/beacon-runner.py dest=/usr/local/bin/beacon owner=root group=root
 - name: copy upstart service definition
-  copy: src=conf/upstart.conf dest=/etc/init/beacon.conf owner=root group=root
+  copy: src=../conf/upstart.conf dest=/etc/init/beacon.conf owner=root group=root
