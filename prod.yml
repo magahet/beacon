@@ -1,0 +1,6 @@
+[ec2]
+gps.gmendiola.com
+
+[ec2:vars]
+fqdn=gps.gmendiola.com
+mail_key=key-1eab42ae67b1e766f58d419a9c8ae5ff
