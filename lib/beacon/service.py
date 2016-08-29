@@ -94,3 +94,13 @@ class BeaconService(object):
         status = emailer.send(from_, check.email_alert_list, check.status,
                               html=check.render_message('html'))
         return status.ok
+
+    def notify_fcm(self, check):
+        logging.info('Sending notification: %s', check.status)
+        from_ = self.email_settings.get('from', '')
+        api_key = self.email_settings.get('api_key', '')
+        domain = self.email_settings.get('domain', '')
+        emailer = email.Emailer(domain, api_key)
+        status = emailer.send(from_, check.email_alert_list, check.status,
+                              html=check.render_message('html'))
+        return status.ok
